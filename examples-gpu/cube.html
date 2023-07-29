@@ -76,7 +76,7 @@
         const list = document.createElement("ul");
         for (let exampleName of exampleNames) {
             const link = document.createElement("a");
-            link.href = `?example=${exampleName}`;
+            link.href = `${exampleName}.html`;
             link.textContent = exampleName;
             link.className = "example";
             const item = document.createElement("li");
@@ -87,7 +87,7 @@
     </script>
 
     <script type="module">
-        import { default as init } from "wasm/cube.js"
+        import { default as init } from "./wasm/cube.js"
 
         init().catch(err => {
             console.error("TLA Err: " + err);
