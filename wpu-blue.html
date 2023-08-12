@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>WebGPU blue</title>
+</head>
+
+<body>
+    <h1>WebGPU blue</h1>
+    <canvas id="gpuCanvas" width="800" height="600"></canvas>
+
+    <script>
+        // Clear color
+        const clearColor = { r: 0.0, g: 0.5, b: 1.0, a: 1.0 };
+
+        // Main function
+        async function init() {
+            // request adapter and device
+            if (!navigator.gpu) {
+                throw Error('WebGPU not supported.');
+            }
+
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) {
+                throw Error('Couldn\'t request WebGPU adapter.');
+            }
+
+            let device = await adapter.requestDevice();
+            // handle errors
+            device.addEventListener("uncapturederror", (event) => {
+                // Re-surface the error.
+                console.error("A WebGPU error was not captured:", event.error);
+            });
+
+            // get canvas ctx
+            const canvas = document.querySelector('#gpuCanvas');
+            const context = canvas.getContext('webgpu');
+
+            // configure canvas
+            const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+            context.configure({
+                device: device,
+                format: canvasFormat,
+            });
+            console.log("configured!");
+
+            const colorAttachment = context.getCurrentTexture();
+            const colorAttachmentView = colorAttachment.createView();
+
+            const commandEncoder = device.createCommandEncoder();
+
+            const renderPassDescriptor = {
+                colorAttachments: [{
+                    clearValue: clearColor,
+                    loadOp: 'clear',
+                    storeOp: 'store',
+                    view: colorAttachmentView
+                }]
+            };
+            const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+
+            passEncoder.end();
+
+            // End frame by passing array of command buffers to command queue for execution
+            device.queue.submit([commandEncoder.finish()]);
+            console.log("submitted");
+        }
+
+        init().catch(err => {
+            console.error("TLA Err: " + err);
+        });;
+    </script>
+</body>
+
+</html>

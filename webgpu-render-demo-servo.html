@@ -152,8 +152,6 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4f
                 }]
             };
 
-            console.log("View: " + context.getCurrentTexture().createView());
-
             const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
             // 9: Draw the triangle
