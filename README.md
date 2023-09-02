@@ -12,7 +12,7 @@ containing web examples, test/edge cases.
   4. [Dancing Rainbow](first-webgpu/7-state.html)
   5. [Wave Rainbow](first-webgpu/8-sim.html)
   6. [Game of Life](first-webgpu/9-endgame.html)
-- wgpu webgpu examples
+- wgpu examples
   - [cube](examples-gpu/cube.html)
   - [hello-compute](examples-gpu/hello-compute.html)
   - [hello-triangle]
@@ -20,3 +20,4 @@ containing web examples, test/edge cases.
   - [shadow]
   - [hello]
   - [info]
+- [{set, map}like](like.html)
