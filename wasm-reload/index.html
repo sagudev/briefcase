@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>WASM of Life</title>
+</head>
+
+<body>
+    <pre>
+(module
+    (table 0 anyfunc)
+    (memory $0 1)
+    (export "memory" (memory $0))
+    (export "main" (func $main))
+    (func $main (; 0 ;) (result i32)
+        (i32.const 42)
+    )
+)
+    </pre>
+
+    <script>
+
+      WebAssembly.instantiateStreaming(fetch("program.wasm"))
+      .then(obj => {
+        let res = obj.instance.exports.main();
+        document.getElementById("out").innerText = res;
+      });
+
+    </script>
+    Output:
+    <code id="out">/</code>
+</body>
+
+</html>
