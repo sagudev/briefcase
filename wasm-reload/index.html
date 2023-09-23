@@ -21,11 +21,23 @@
 
     <script>
 
-      WebAssembly.instantiateStreaming(fetch("program.wasm"))
+    fetch('program.wasm').then(function(response) {
+        console.log("fetched");
+        response.arrayBuffer().then(function(bytes) {
+            console.log("buffered");
+            WebAssembly.instantiate(bytes).then(function(obj) {
+                console.log("instantiate");
+                let res = obj.instance.exports.main();
+                document.getElementById("out").innerText = res;
+            })
+        })
+    });
+
+      /*WebAssembly.instantiateStreaming(fetch("program.wasm"))
       .then(obj => {
         let res = obj.instance.exports.main();
         document.getElementById("out").innerText = res;
-      });
+      });*/
 
     </script>
     Output:
