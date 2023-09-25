@@ -124,8 +124,14 @@
                     throw Error("WebGPU not supported.");
                 }
 
+                console.log("loaded");
+
                 const adapter = await navigator.gpu.requestAdapter();
+
+                console.log("adaptered");
                 const device = await adapter.requestDevice();
+
+                console.log("deviced");
 
                 const context = canvas.getContext('webgpu');
 
@@ -140,7 +146,9 @@
                     alphaMode: 'premultiplied',
                 });
 
-                const pipeline = device.createRenderPipeline({
+                console.log("configured!");
+
+                /*const pipeline = device.createRenderPipeline({
                     layout: 'auto',
                     vertex: {
                         module: device.createShaderModule({
@@ -162,9 +170,12 @@
                     primitive: {
                         topology: 'triangle-list',
                     },
-                });
+                });*/
 
-                function frame() {
+                console.log("createRenderPipeline!");
+
+                /*function frame() {
+                    console.log("frame!");
 
                     const commandEncoder = device.createCommandEncoder();
                     const textureView = context.getCurrentTexture().createView();
@@ -186,10 +197,13 @@
                     passEncoder.end();
 
                     device.queue.submit([commandEncoder.finish()]);
-                    requestAnimationFrame(frame);
-                }
+                    console.log("frame end!");
+                    //requestAnimationFrame(frame);
+                    //console.log("inner requested!");
+                }*/
 
-                requestAnimationFrame(frame);
+                //requestAnimationFrame(frame);
+                console.log("outer requested!");
             </script>
         </div>
     </div>
