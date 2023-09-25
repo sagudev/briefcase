@@ -100,8 +100,10 @@
                         href="https://github.com/webgpu/webgpu-samples/tree/main/src/sample/helloTriangle/main.ts">See
                         it on Github!</a>
                     <p>Shows rendering a basic triangle.</p>
-                    <p class="wpu-unsupported">Something went wrong. Do your browser and device support WebGPU?</p>
-                    <p class="wpu-unsupported">NotSupportedError: WebGPU is not yet available in Release or Beta builds.
+                    <p class="wpu-unsupported">Something went wrong. Do your browser and device
+                        support WebGPU?</p>
+                    <p class="wpu-unsupported">NotSupportedError: WebGPU is not yet available in
+                        Release or Beta builds.
                     </p>
                 </div>
                 <div class="canvasContainer">
@@ -116,17 +118,23 @@
                 const triangleVertWGSL = await(await fetch('../shaders/triangle.vert.wgsl')).text();
                 const redFragWGSL = await(await fetch('../shaders/red.frag.wgsl')).text();
 
-                if (navigator.gpu) {
-                    for (const element of document.getElementsByClassName("wpu-unsupported")) {
-                        element.style.display = 'none';
-                    }
-                } else {
+                if (!navigator.gpu) {
                     throw Error("WebGPU not supported.");
                 }
 
                 console.log("loaded");
 
                 const adapter = await navigator.gpu.requestAdapter();
+                if (!adapter) {
+                    throw Error("Couldn't request WebGPU adapter.");
+                }
+
+                /*
+                firefox has navigator.gpu but but throws on requestAdpater
+                */
+                for (const element of document.getElementsByClassName("wpu-unsupported")) {
+                    element.style.display = 'none';
+                }
 
                 console.log("adaptered");
                 const device = await adapter.requestDevice();
