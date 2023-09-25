@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charSet="utf-8" />
+    <title>WebGPU Samples</title>
+    <meta name="description"
+        content="The WebGPU Samples are a set of samples demonstrating the use of the WebGPU API." />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="stylesheet" href="../style.css" />
+    <style data-href="https://fonts.googleapis.com/css?family=Inconsolata&display=swap">
+        @font-face {
+            font-family: 'Inconsolata';
+            font-style: normal;
+            font-weight: 400;
+            font-stretch: normal;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/inconsolata/v32/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8WR32kQ.woff) format('woff')
+        }
+
+        @font-face {
+            font-family: 'Inconsolata';
+            font-style: normal;
+            font-weight: 400;
+            font-stretch: 100%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/inconsolata/v32/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8WRL2kXWdycuJDETf.woff) format('woff');
+            unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB
+        }
+
+        @font-face {
+            font-family: 'Inconsolata';
+            font-style: normal;
+            font-weight: 400;
+            font-stretch: 100%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/inconsolata/v32/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8WRP2kXWdycuJDETf.woff) format('woff');
+            unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF
+        }
+
+        @font-face {
+            font-family: 'Inconsolata';
+            font-style: normal;
+            font-weight: 400;
+            font-stretch: 100%;
+            font-display: swap;
+            src: url(https://fonts.gstatic.com/s/inconsolata/v32/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8WR32kXWdycuJDA.woff) format('woff');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD
+        }
+    </style>
+
+    <style>
+        @keyframes animated-size {
+            0% {
+                width: 100px;
+                height: 600px;
+            }
+
+            50% {
+                width: 100%;
+                height: 600px;
+            }
+
+            100% {
+                width: 100px;
+                height: 600px;
+            }
+        }
+
+        .animatedCanvasSize {
+            animation-duration: 3s;
+            animation-iteration-count: infinite;
+            animation-name: animated-size;
+            animation-timing-function: ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="__next">
+        <div class="wrapper">
+            <nav class="panel container" data-expanded="false">
+                <h1><a href="/">WebGPU Samples</a>
+                    <div class="expand"></div>
+                </h1>
+                <div class="panelContents"><a href="https://github.com/undefined">Github</a>
+                    <hr />
+                    <ul class="exampleList">
+                        <li><a href="helloTriangle.html">helloTriangle</a></li>
+                        <li><a href="helloTriangleMSAA.html">helloTriangleMSAA</a></li>
+                        <li><a href="resizeCanvas.html">resizeCanvas</a></li>
+                        <li><a href="rotatingCube.html">rotatingCube</a></li>
+                        <li><a href="twoCubes.html">twoCubes</a></li>
+                        <li><a href="texturedCube.html">texturedCube</a></li>
+                        <li><a href="instancedCube.html">instancedCube</a></li>
+                        <li><a href="fractalCube.html">fractalCube</a></li>
+                        <li><a href="cameras.html">cameras</a></li>
+                        <li><a href="cubemap.html">cubemap</a></li>
+                        <li><a href="computeBoids.html">computeBoids</a></li>
+                        <li><a href="animometer.html">animometer</a></li>
+                        <li><a href="videoUploading.html">videoUploading</a></li>
+                        <li><a href="videoUploadingWebCodecs.html">videoUploadingWebCodecs</a></li>
+                        <li><a href="samplerParameters.html">samplerParameters</a></li>
+                        <li><a href="imageBlur.html">imageBlur</a></li>
+                        <li><a href="shadowMapping.html">shadowMapping</a></li>
+                        <li><a href="reversedZ.html">reversedZ</a></li>
+                        <li><a href="deferredRendering.html">deferredRendering</a></li>
+                        <li><a href="particles.html">particles</a></li>
+                        <li><a href="cornell.html">cornell</a></li>
+                        <li><a href="gameOfLife.html">gameOfLife</a></li>
+                        <li><a href="renderBundles.html">renderBundles</a></li>
+                        <li><a href="worker.html">worker</a></li>
+                        <li><a href="A-buffer.html">A-buffer</a></li>
+                    </ul>
+                    <hr />
+                    <h3>Other Pages</h3>
+                    <ul class="exampleList">
+                        <li><a rel="noreferrer" target="_blank" href="workload-simulator.html">Workload Simulator
+                                ↗️</a></li>
+                    </ul>
+                </div>
+            </nav>
+            <main>
+                <div>
+                    <h1>Resize Canvas</h1>
+                    <p>Shows multisampled rendering a basic triangle on a dynamically sized canvas.</p>
+                    <p class="wpu-unsupported">Something went wrong. Do your browser and device
+                        support WebGPU?</p>
+                    <p class="wpu-unsupported">NotSupportedError: WebGPU is not yet available in
+                        Release or Beta builds.
+                    </p>
+                </div>
+                <div class="canvasContainer">
+                    <div style="position: absolute; left: 10px;"></div>
+                    <div style="position: absolute; right: 10px;"></div>
+                    <canvas id="canvas" width="1200" height="1200"></canvas>
+                </div>
+            </main>
+            <script type="module">
+                const canvas = document.getElementById("canvas");
+
+                const triangleVertWGSL = await(await fetch('../shaders/triangle.vert.wgsl')).text();
+                const redFragWGSL = await(await fetch('../shaders/red.frag.wgsl')).text();
+
+                if (!navigator.gpu) {
+                    throw Error("WebGPU not supported.");
+                }
+
+                const adapter = await navigator.gpu.requestAdapter();
+                if (!adapter) {
+                    throw Error("Couldn't request WebGPU adapter.");
+                }
+
+                /*
+                firefox has navigator.gpu but but throws on requestAdpater
+                */
+                for (const element of document.getElementsByClassName("wpu-unsupported")) {
+                    element.style.display = 'none';
+                }
+
+                const device = await adapter.requestDevice();
+
+                const context = canvas.getContext('webgpu');
+
+                const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+
+                const devicePixelRatio = window.devicePixelRatio || 1;
+                canvas.width = canvas.clientWidth * devicePixelRatio;
+                canvas.height = canvas.clientHeight * devicePixelRatio;
+
+                context.configure({
+                    device,
+                    format: presentationFormat,
+                    alphaMode: 'premultiplied',
+                });
+
+                const sampleCount = 4;
+
+                const pipeline = device.createRenderPipeline({
+                    layout: 'auto',
+                    vertex: {
+                        module: device.createShaderModule({
+                            code: triangleVertWGSL,
+                        }),
+                        entryPoint: 'main',
+                    },
+                    fragment: {
+                        module: device.createShaderModule({
+                            code: redFragWGSL,
+                        }),
+                        entryPoint: 'main',
+                        targets: [
+                            {
+                                format: presentationFormat,
+                            },
+                        ],
+                    },
+                    primitive: {
+                        topology: 'triangle-list',
+                    },
+                    multisample: {
+                        count: 4,
+                    },
+                });
+
+                let renderTarget = undefined;
+                let renderTargetView;
+
+                canvas.classList.add("animatedCanvasSize");
+
+                function frame() {
+                    const currentWidth = canvas.clientWidth * devicePixelRatio;
+                    const currentHeight = canvas.clientHeight * devicePixelRatio;
+
+                    // The canvas size is animating via CSS.
+                    // When the size changes, we need to reallocate the render target.
+                    // We also need to set the physical size of the canvas to match the computed CSS size.
+                    if (
+                        (currentWidth !== canvas.width || currentHeight !== canvas.height) &&
+                        currentWidth &&
+                        currentHeight
+                    ) {
+                        if (renderTarget !== undefined) {
+                            // Destroy the previous render target
+                            renderTarget.destroy();
+                        }
+
+                        // Setting the canvas width and height will automatically resize the textures returned
+                        // when calling getCurrentTexture() on the context.
+                        canvas.width = currentWidth;
+                        canvas.height = currentHeight;
+
+                        // Resize the multisampled render target to match the new canvas size.
+                        renderTarget = device.createTexture({
+                            size: [canvas.width, canvas.height],
+                            sampleCount,
+                            format: presentationFormat,
+                            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+                        });
+
+                        renderTargetView = renderTarget.createView();
+                    }
+
+                    const commandEncoder = device.createCommandEncoder();
+
+                    const renderPassDescriptor = {
+                        colorAttachments: [
+                            {
+                                view: renderTargetView,
+                                resolveTarget: context.getCurrentTexture().createView(),
+                                clearValue: { r: 0.2, g: 0.2, b: 0.2, a: 1.0 },
+                                loadOp: 'clear',
+                                storeOp: 'store',
+                            },
+                        ],
+                    };
+
+                    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+                    passEncoder.setPipeline(pipeline);
+                    passEncoder.draw(3);
+                    passEncoder.end();
+
+                    device.queue.submit([commandEncoder.finish()]);
+                    requestAnimationFrame(frame);
+                }
+
+                requestAnimationFrame(frame);
+            </script>
+        </div>
+    </div>
+</body>
+
+</html>
