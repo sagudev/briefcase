@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charSet="utf-8" />
+    <title>WebGPU error on error</title>
+</head>
+
+<body>
+    <canvas id="canvas" width="0" height="0"></canvas>
+    <script type="module">
+        const canvas = document.getElementById("canvas");
+        const adapter = await navigator.gpu.requestAdapter();
+        const device = await adapter.requestDevice();
+
+        const context = canvas.getContext('webgpu');
+        const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+
+        // zero sized canvas should trigger ValidationError(InvalidDimension(Zero(X)))
+        context.configure({
+            device,
+            format: presentationFormat,
+            alphaMode: 'premultiplied',
+        });
+    </script>
+
+</body>
+
+</html>
