@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charSet="utf-8" />
+    <title>WebGPU error on error</title>
+    <style>
+        code {
+            display: block;
+            white-space: pre-wrap
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <textarea id="textarea" width="500" height="500"></textarea>
+    <code id="out">
+
+    </code>
+    <script>
+        const out = document.getElementById("out");
+        function log(msg) {
+            console.log(msg);
+            out.innerText += msg + "\n";
+        }
+        const canvas = document.getElementById("canvas");
+        log(`canvas width: ${canvas.clientWidth}; height: ${canvas.clientHeight}`)
+        const textarea = document.getElementById("textarea");
+        log(`textarea width: ${textarea.clientWidth}; textarea: ${canvas.clientHeight}`)
+
+
+    </script>
+</body>
+
+</html>

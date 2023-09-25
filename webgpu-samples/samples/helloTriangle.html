@@ -136,10 +136,7 @@
                     element.style.display = 'none';
                 }
 
-                console.log("adaptered");
                 const device = await adapter.requestDevice();
-
-                console.log("deviced");
 
                 const context = canvas.getContext('webgpu');
 
@@ -154,9 +151,7 @@
                     alphaMode: 'premultiplied',
                 });
 
-                console.log("configured!");
-
-                /*const pipeline = device.createRenderPipeline({
+                const pipeline = device.createRenderPipeline({
                     layout: 'auto',
                     vertex: {
                         module: device.createShaderModule({
@@ -178,12 +173,9 @@
                     primitive: {
                         topology: 'triangle-list',
                     },
-                });*/
+                });
 
-                console.log("createRenderPipeline!");
-
-                /*function frame() {
-                    console.log("frame!");
+                function frame() {
 
                     const commandEncoder = device.createCommandEncoder();
                     const textureView = context.getCurrentTexture().createView();
@@ -205,13 +197,10 @@
                     passEncoder.end();
 
                     device.queue.submit([commandEncoder.finish()]);
-                    console.log("frame end!");
-                    //requestAnimationFrame(frame);
-                    //console.log("inner requested!");
-                }*/
+                    requestAnimationFrame(frame);
+                }
 
-                //requestAnimationFrame(frame);
-                console.log("outer requested!");
+                requestAnimationFrame(frame);
             </script>
         </div>
     </div>
