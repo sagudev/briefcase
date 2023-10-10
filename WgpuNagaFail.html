@@ -13,7 +13,7 @@
 
 <script>
     // Define global buffer size
-    const BUFFER_SIZE = 1000;
+    const BUFFER_SIZE = 100;
 
     // Compute shader
     const shader = `
@@ -143,9 +143,10 @@ fn main(
                 16, // Offset
                 BUFFER_SIZE - 16 // Length
             );
+            console.log("map async done!");
 
             const copyArrayBuffer = stagingBuffer.getMappedRange(16, BUFFER_SIZE - 16 - 16);
-            console.log("lol")
+            console.log("getMappedRange done!");
             const data = copyArrayBuffer.slice();
             stagingBuffer.unmap();
             console.log(new Float32Array(data));
