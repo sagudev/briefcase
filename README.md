@@ -12,6 +12,7 @@ containing web examples, test/edge cases.
   4. [Dancing Rainbow](first-webgpu/7-state.html)
   5. [Wave Rainbow](first-webgpu/8-sim.html)
   6. [Game of Life](first-webgpu/9-endgame.html)
+  99. [Fast Game of Life](fastgame.html)
 - wgpu examples
   - [cube](examples-gpu/cube.html)
   - [hello-compute](examples-gpu/hello-compute.html)
