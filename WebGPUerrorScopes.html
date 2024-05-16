@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>WebGPU ErrorScopes</title>
+</head>
+
+<body>
+    <h1>WebGPU ErrorScopes</h1>
+
+    <script>
+        // Main function
+        async function init() {
+            // request adapter and device
+            if (!navigator.gpu) {
+                throw Error('WebGPU not supported.');
+            }
+
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) {
+                throw Error('Couldn\'t request WebGPU adapter.');
+            }
+
+            let device = await adapter.requestDevice();
+            // handle errors
+            device.addEventListener("uncapturederror", (event) => {
+                // Re-surface the error.
+                console.error("A WebGPU error was not captured:", event.error.message);
+            });
+
+            let i = 0;
+            while (true) {
+                device.pushErrorScope('validation');
+                //device.pushErrorScope('internal');
+                device.pushErrorScope('out-of-memory');
+                const cellShaderModule = device.createShaderModule({
+                    label: "Cell shader",
+                    code: `
+                        struct a${i}
+                      `
+                });
+
+                let p1 = device.popErrorScope();
+                let p2 = device.popErrorScope();
+                console.log(await Promise.all([p1, p2]));
+                console.log("ok");
+                break;
+                i++;
+            }
+        }
+
+        init().catch(err => {
+            console.error("TLA Err: " + err);
+        });;
+    </script>
+</body>
+
+</html>
