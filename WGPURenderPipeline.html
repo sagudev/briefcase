@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <h1 id="res" style="background-color: green;">WebGPU createRenderPipeline</h1>
+    <h1 id="res" style="background-color: red;">WebGPU createRenderPipeline</h1>
     background will be red on error (but it shouldn't be)
     <script>
         // Main function
@@ -28,7 +28,7 @@
 
             // handle errors
             device.addEventListener("uncapturederror", (event) => {
-                document.getElementById("res").style = "background-color: red;";
+                document.getElementById("res").style = "background-color: green;";
                 // Re-surface the error.
                 console.error("A WebGPU error was not captured:", event.error);
             });
