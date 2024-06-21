@@ -22,3 +22,4 @@ containing web examples, test/edge cases.
   - [hello]
   - [info]
 - [{set, map}like](like.html)
+- [createRenderPipeline](WGPURenderPipeline)

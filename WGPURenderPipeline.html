@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>WebGPU RenderPipeline</title>
+</head>
+
+<body>
+    <h1 id="res" style="background-color: green;">WebGPU createRenderPipeline</h1>
+    background will be red on error (but it shouldn't be)
+    <script>
+        // Main function
+
+        async function init() {
+            // 1: request adapter and device
+            if (!navigator.gpu) {
+                throw Error('WebGPU not supported.');
+            }
+
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) {
+                throw Error('Couldn\'t request WebGPU adapter.');
+            }
+
+            let device = await adapter.requestDevice();
+
+            // handle errors
+            device.addEventListener("uncapturederror", (event) => {
+                document.getElementById("res").style = "background-color: red;";
+                // Re-surface the error.
+                console.error("A WebGPU error was not captured:", event.error);
+            });
+
+            const module = device.createShaderModule({
+                code: `
+                @vertex fn foo() -> @builtin(position) vec4f {
+                    return vec4f(0, 0, 0, 1);
+                }
+                `,
+            });
+            const renderPipeline = device.createRenderPipeline({
+                layout: 'auto',
+                vertex: {
+                    module,
+                    entryPoint: 'foo',
+                },
+            });
+        }
+
+        init().catch(err => {
+            console.error("TLA Err: " + err);
+        });;
+    </script>
+</body>
+
+</html>
