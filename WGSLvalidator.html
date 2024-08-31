@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>WGSL validator</title>
+    <style>
+        @media (prefers-color-scheme: dark) {
+
+            body {
+                background-color: #1c1b22;
+                color: #fbfbfe;
+            }
+
+            textarea {
+                background-color: #4f4d5e;
+                color: #fbfbfe;
+            }
+        }
+
+        button {
+            height: 2rem;
+            background-color: green;
+        }
+
+        /* Global scale */
+        html,
+        body {
+            margin: 0;
+            font-size: calc(1rem + 0.5vw);
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-flow: column;
+        }
+
+        main {
+            display: flex;
+            flex-flow: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        textarea {
+            /*width: 100%;
+            width: -moz-available;
+            width: -webkit-fill-available;
+            width: fill-available;*/
+            font-family: inherit;
+            font-size: 1rem;
+            white-space: pre;
+            resize: none;
+            border: none;
+            /* padding-left: 1rem; */
+            margin: 0.2rem;
+            flex: auto;
+            flex-grow: 5;
+        }
+
+        code {
+            font-family: inherit;
+            font-size: 1.5rem;
+            white-space: pre;
+            overflow: scroll;
+            flex: auto;
+            padding-left: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>WGSL validator</h1>
+
+    <main>
+        <textarea id="input">
+const_assert(false);
+        </textarea>
+        <button onclick="validate()">validate</button>
+        <code id="output">Initializing device!</code>
+    </main>
+
+    <script>
+        const input = document.getElementById("input");
+        const output = document.getElementById("output");
+
+        var device;
+
+        function validate() {
+            output.textContent = "";
+            device.pushErrorScope('validation');
+            device.createShaderModule({
+                code: input.value
+            });
+            device.popErrorScope().then((error) => {
+                if (error) {
+                    output.textContent = error.message;
+                } else {
+                    output.textContent = "OK!";
+                }
+            })
+        }
+
+        // Main function
+        async function init() {
+            // request adapter and device
+            if (!navigator.gpu) {
+                output.textContent = 'WebGPU not supported!'
+                return;
+            }
+
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) {
+                output.textContent = 'Couldn\'t request WebGPU adapter!'
+                return;
+            }
+
+            device = await adapter.requestDevice();
+            // handle errors
+            device.addEventListener("uncapturederror", (event) => {
+                m = "A WebGPU error was not captured:", event.error.message
+                // Re-surface the error.
+                console.error(m);
+            });
+            output.textContent = "Ready!";
+        }
+
+        init().catch(err => {
+            console.error("TLA Err: " + err);
+        });;
+    </script>
+</body>
+
+</html>
