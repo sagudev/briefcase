@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>WebGPU map speedtest</title>
+</head>
+
+<body>
+    <h1 id="title">WebGPU data</h1>
+    avg: <p id="avg"></p>
+    <table id="table">
+        <tr>
+            <th>No.</th>
+            <th>Result [ms]</th>
+        </tr>
+    </table>
+</body>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const write = JSON.parse(urlParams.get("write"));
+    const title = document.getElementById("title");
+    title.innerText = `WebGPU map speedtest (${(write) ? 'write back' : 'read only'})`;
+
+    const avg = document.getElementById("avg");
+    const table = document.getElementById("table");
+
+    async function main() {
+        if (!navigator.gpu) {
+            throw Error('WebGPU not supported.');
+        }
+        const adapter = await navigator.gpu?.requestAdapter();
+        if (!adapter) {
+            throw Error('Couldn\'t request WebGPU adapter.');
+        }
+        const device = await adapter?.requestDevice();
+        if (!device) {
+            throw Error('No device');
+        }
+
+        device.addEventListener('uncapturederror', (event) => {
+            // Re-surface the error.
+            console.error('A WebGPU error was not captured:', event.error);
+        });
+
+        // Get a WebGPU context from the canvas and configure it
+        const canvas = document.getElementById("kanvas");
+
+        const BUFFER_SIZE = 64 * 1000 * 1000;
+
+        const buffer = device.createBuffer({
+            label: 'mappable buffer',
+            size: BUFFER_SIZE,
+            usage: (write) ? GPUBufferUsage.MAP_WRITE : GPUBufferUsage.MAP_READ,
+        });
+
+        async function map_unmap() {
+            await buffer.mapAsync(
+                (write) ? GPUMapMode.WRITE : GPUMapMode.READ,
+                0, // Offset
+                BUFFER_SIZE, // Length
+            );
+
+            const data = buffer.getMappedRange(0, BUFFER_SIZE);
+            // do data
+            if (write) {
+                data[0] = 42;
+                data[data.length - 1] = 42;
+            } else {
+                let a = data[0];
+                let b = data[data.length];
+            }
+            // unmap
+            buffer.unmap();
+            //await device.queue.onSubmittedWorkDone();
+        }
+
+        let sum = 0;
+        let n = 0;
+        while (true) {
+            const t0 = performance.now();
+            await map_unmap();
+            const t1 = performance.now();
+            let m = t1 - t0;
+            sum += m;
+            n += 1;
+            table.innerHTML += `
+                <tr>
+                    <td>${n}</td>
+                    <td>${m}</td>
+                </tr>
+            `;
+            avg.innerText = `${sum / n}`
+        }
+    }
+    main().catch((e) => { console.error(e) });
+</script>
+
+</html>
