@@ -23,3 +23,4 @@ containing web examples, test/edge cases.
   - [info]
 - [{set, map}like](like.html)
 - [createRenderPipeline](WGPURenderPipeline)
+- [WebGPU map speedtest](webgpu_map_speed.html)
