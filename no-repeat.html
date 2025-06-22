@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Canvas createPattern No Repeat</title>
+    <style>
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+
+<body>
+    <img id="img" src="./t.bmp" />
+
+    <canvas id="myCanvas" width="500" height="300"></canvas>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "red";
+        ctx.fillRect(0, 0, 500, 300);
+
+        const img = document.getElementById("img");
+        img.onload = () => {
+            // Create a repeating pattern (required by createPattern)
+            const pattern = ctx.createPattern(img, 'no-repeat');
+
+            // Set the pattern as the fill style
+            ctx.fillStyle = pattern;
+
+            // Only fill an area the size of the image (simulates "no-repeat")
+            ctx.fillRect(0, 0, 100, 100);
+        };
+    </script>
+
+</body>
+
+</html>
