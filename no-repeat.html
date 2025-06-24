@@ -2,8 +2,22 @@
 <html>
 
 <head>
-    <title>Canvas createPattern No Repeat</title>
+    <title>Canvas globalCompositeOperation Demo</title>
     <style>
+        .canvas-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .canvas-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+            font-size: 12px;
+        }
+
         canvas {
             border: 1px solid #000;
         }
@@ -11,29 +25,65 @@
 </head>
 
 <body>
-    <img id="img" src="./t.bmp" />
+    <img id="img" src="./t.bmp" hidden />
 
-    <canvas id="myCanvas" width="500" height="300"></canvas>
+    <div class="canvas-container" id="canvasContainer"></div>
 
     <script>
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = "red";
-        ctx.fillRect(0, 0, 500, 300);
+        const operations = [
+            // composite
+            "clear", "copy", "source-over", "destination-over", "source -in",
+            "destination -in", "source-out", "destination-out", "source-atop",
+            "destination-atop", "xor", "lighter", "plus-darker", "plus-lighter",
+            // blend
+            "normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue",
+            "saturation", "color", "luminosity"
+        ];
 
-        const img = document.getElementById("img");
+        const container = document.getElementById('canvasContainer');
+        const img = document.getElementById('img');
+
         img.onload = () => {
-            // Create a repeating pattern (required by createPattern)
-            const pattern = ctx.createPattern(img, 'no-repeat');
+            operations.forEach(op => {
+                // Create container for each operation
+                const block = document.createElement('div');
+                block.className = 'canvas-block';
 
-            // Set the pattern as the fill style
-            ctx.fillStyle = pattern;
+                // Label
+                const label = document.createElement('div');
+                label.textContent = op;
 
-            // Only fill an area the size of the image (simulates "no-repeat")
-            ctx.fillRect(0, 0, 100, 100);
+                // Canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 150;
+                const ctx = canvas.getContext('2d');
+
+                // Red background
+                ctx.fillStyle = "red";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Pattern
+                const pattern = ctx.createPattern(img, 'no-repeat');
+                ctx.fillStyle = pattern;
+
+                // Apply composite operation
+                ctx.globalCompositeOperation = op;
+
+                // Circle
+                ctx.beginPath();
+                ctx.arc(0, 0, 50, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+
+
+                // Append
+                block.appendChild(label);
+                block.appendChild(canvas);
+                container.appendChild(block);
+            });
         };
     </script>
-
 </body>
 
 </html>
