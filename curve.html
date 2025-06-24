@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <canvas id="canvas" width="500" height="300"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, 500, 300);
+
+        ctx.lineWidth = 50;
+        //ctx.lineJoin = 'bevel';
+        //ctx.lineCap = "round";
+
+        ctx.strokeStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(110, 50);
+        ctx.lineTo(110, 60);
+        ctx.lineTo(100, 60);
+        ctx.stroke();
+    </script>
+
+</body>
+
+</html>
