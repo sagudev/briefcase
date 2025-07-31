@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2d.gradient.interpolate.coloralpha</title>
+</head>
+
+<body>
+    <h1>2d.gradient.interpolate.coloralpha</h1>
+    based on:
+    <a
+        href="https://github.com/web-platform-tests/wpt/blob/18c64a74b1/html/canvas/element/fill-and-stroke-styles/2d.gradient.interpolate.coloralpha.html">html/canvas/element/fill-and-stroke-styles/2d.gradient.interpolate.coloralpha.html</a>
+
+    <table>
+        <tr>
+            <td>2D canvas</td>
+            <td>
+                <canvas id="canvas" width="100" height="50"></canvas>
+                <script>
+                    const ctx = document.getElementById("canvas").getContext("2d");
+                    var g = ctx.createLinearGradient(0, 0, 100, 0);
+                    g.addColorStop(0, 'rgba(255,255,0, 0)');
+                    g.addColorStop(1, 'rgba(0,0,255, 1)');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, 100, 50);
+                </script>
+            </td>
+        </tr>
+        <tr>
+            <td>CSS</td>
+            <td>
+                <div id="css"
+                    style="display: inline-block; width: 100px; height: 50px; background: linear-gradient(to right, rgba(255,255,0,0), rgba(0,0,255,1));">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>SVG</td>
+            <td>
+                <svg width="100" height="50">
+                    <defs>
+                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="rgb(255, 255, 0)" stop-opacity="0" />
+                            <stop offset="100%" stop-color="rgb(0, 0, 255)" stop-opacity="1" />
+                        </linearGradient>
+                    </defs>
+                    <rect width="100" height="50" fill="url(#grad1)" />
+                </svg>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>
