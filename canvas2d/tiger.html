@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Ghostscript Tiger - Vector Canvas</title>
+    <title>Ghostscript Tiger</title>
     <style>
         body {
             margin: 0;
@@ -40,18 +40,11 @@
             ctx.save();
             ctx.translate(x, y); // or center based on viewBox
             for (const obj of svg) {
-                //console.log(obj);
-                if (obj.stroke) {
-                    ctx.fillStyle = obj.fill;
-                    ctx.strokeStyle = obj.stroke;
-                    ctx.lineWidth = obj.stroke_width;
-                    console.log(obj.path);
-                    ctx.stroke(obj.path);
-                }
+                ctx.lineWidth = obj.stroke_width;
                 ctx.fillStyle = obj.fill;
                 ctx.strokeStyle = obj.stroke;
+                //if (obj.stroke) ctx.stroke(obj.path);
                 ctx.fill(obj.path);
-
             }
             ctx.restore();
         }
