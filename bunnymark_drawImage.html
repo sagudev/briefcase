@@ -20,6 +20,7 @@
 <body>
     <canvas id="canvas"></canvas>
     <script>
+        // { var script = document.createElement('script'); script.onload = function () { var stats = new Stats(); document.body.appendChild(stats.dom); requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) }); }; script.src = './stats.min.js'; document.head.appendChild(script); }
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
@@ -27,8 +28,7 @@
         canvas.height = window.innerHeight;
 
         const gravity = 0.5;
-        const maxBunnies = 100000;
-        const bunnies = [];
+        var bunnies = [];
 
         const bunnyImage = new Image();
         bunnyImage.src = './bunny.png';
@@ -42,23 +42,33 @@
             }
 
             update() {
+                // Apply speed to position
                 this.x += this.speedX;
                 this.y += this.speedY;
+
+                // Apply gravity to y speed
                 this.speedY += gravity;
 
-                if (this.x > canvas.width) {
-                    this.x = canvas.width;
-                    this.speedX *= -1;
-                }
+                // Bounce off left wall
                 if (this.x < 0) {
                     this.x = 0;
                     this.speedX *= -1;
                 }
+
+                // Bounce off right wall
+                if (this.x > canvas.width - bunnyImage.width) {
+                    this.x = canvas.width - bunnyImage.width;
+                    this.speedX *= -1;
+                }
+
+                // Floor
                 if (this.y > canvas.height - bunnyImage.height) {
                     this.y = canvas.height - bunnyImage.height;
                     this.speedY *= -0.85;
                     if (Math.random() > 0.5) this.speedY -= Math.random() * 6;
                 }
+
+                // Ceiling
                 if (this.y < 0) {
                     this.y = 0;
                     this.speedY = 0;
@@ -71,14 +81,23 @@
         }
 
         function addBunnies(count = 100) {
+            if (bunnies.length == 1) {
+                bunnies = [];
+            }
             for (let i = 0; i < count; i++) {
-                if (bunnies.length < maxBunnies) {
-                    bunnies.push(new Bunny());
-                }
+                bunnies.push(new Bunny());
             }
         }
 
-        canvas.addEventListener('click', () => addBunnies(100));
+        canvas.onclick = (e) => {
+            e.preventDefault();
+            addBunnies(100)
+        };
+        canvas.oncontextmenu = (e) => {
+            e.preventDefault();
+            bunnies = [];
+            addBunnies(1);
+        };
 
         // FPS tracking
         let lastTime = performance.now();
@@ -109,12 +128,12 @@
             // Draw metrics
             ctx.fillStyle = 'black';
             ctx.font = '20px Arial';
-            ctx.fillText(`Bunnies: ${bunnies.length}`, 10, 30);
-            ctx.fillText(`FPS: ${fps}`, 10, 60);
+            ctx.fillText(`Bunnies: ${bunnies.length}`, 10, 70);
+            ctx.fillText(`FPS: ${fps}`, 10, 100);
         }
 
         bunnyImage.onload = () => {
-            addBunnies(100);
+            addBunnies(1);
             requestAnimationFrame(animate);
         };
     </script>
