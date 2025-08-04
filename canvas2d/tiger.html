@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ghostscript Tiger - Vector Canvas</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #797979;
+        }
+
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="200" height="200"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        async function parse_svg(svg_text) {
+            const parser = new DOMParser();
+            const svgDoc = parser.parseFromString(svg_text, "image/svg+xml");
+            const paths = svgDoc.querySelectorAll('path');
+            return Array.from(paths).map((svg_path) => ({
+                path: new Path2D(svg_path.getAttribute('d')),
+                fill: svg_path.getAttribute('fill'),
+                stroke: svg_path.getAttribute('stroke'),
+                stroke_width: svg_path.getAttribute('stroke-width'),
+            }))
+        }
+
+        async function draw_svg_paths(ctx, svg, x, y) {
+            ctx.save();
+            ctx.translate(x, y); // or center based on viewBox
+            for (const obj of svg) {
+                //console.log(obj);
+                if (obj.stroke) {
+                    ctx.fillStyle = obj.fill;
+                    ctx.strokeStyle = obj.stroke;
+                    ctx.lineWidth = obj.stroke_width;
+                    console.log(obj.path);
+                    ctx.stroke(obj.path);
+                }
+                ctx.fillStyle = obj.fill;
+                ctx.strokeStyle = obj.stroke;
+                ctx.fill(obj.path);
+
+            }
+            ctx.restore();
+        }
+
+        fetch('Ghostscript_Tiger.svg')
+            .then((response) => response.text())
+            .then(parse_svg)
+            .then((svg) => {
+                draw_svg_paths(ctx, svg, 0, 0)
+            });
+    </script>
+</body>
+
+</html>
