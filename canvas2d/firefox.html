@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SVG to Canvas with Radial Gradient</title>
+  <style>
+    canvas { border: 1px solid black; }
+  </style>
+</head>
+<body>
+<canvas id="canvas" width="600" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function hexToRgb(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const bigint = parseInt(hex, 16);
+  return `${(bigint >> 16) & 255}, ${(bigint >> 8) & 255}, ${bigint & 255}`;
+}
+
+function parseTransform(transformStr) {
+  const translateMatch = transformStr?.match(/translate\(([^)]+)\)/);
+  const scaleMatch = transformStr?.match(/scale\(([^)]+)\)/);
+
+  let tx = 0, ty = 0, sx = 1, sy = 1;
+
+  if (translateMatch) {
+    const [x, y] = translateMatch[1].split(/\s+/).map(Number);
+    tx = x;
+    ty = y || 0;
+  }
+
+  if (scaleMatch) {
+    const parts = scaleMatch[1].split(/\s+/).map(Number);
+    sx = parts[0];
+    sy = parts[1] ?? sx;
+  }
+
+  return { tx, ty, sx, sy };
+}
+
+function applyRadialGradient(ctx, gradientDef) {
+  let { cx, cy, r, fx, fy, stops, gradientTransform, gradientUnits } = gradientDef;
+  if (fx == null) fx = cx;
+  if (fy == null) fy = cy;
+
+  if (gradientTransform) {
+    const { tx, ty, sx, sy } = parseTransform(gradientTransform);
+    cx = cx * sx + tx;
+    cy = cy * sy + ty;
+    fx = fx * sx + tx;
+    fy = fy * sy + ty;
+    r = r * Math.max(sx, sy);
+  }
+
+  const gradient = ctx.createRadialGradient(fx, fy, 0, cx, cy, r);
+  stops.forEach(stop => {
+    const rgba = `rgba(${hexToRgb(stop.color)}, ${stop.opacity})`;
+    gradient.addColorStop(stop.offset, rgba);
+  });
+
+  return gradient;
+}
+
+async function parse_svg(svg_text) {
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svg_text, "image/svg+xml");
+
+  const gradientDefs = {};
+  const radialGradients = svgDoc.querySelectorAll('radialGradient');
+
+  radialGradients.forEach((grad) => {
+    const id = grad.getAttribute('id');
+    const cx = parseFloat(grad.getAttribute('cx') || 0);
+    const cy = parseFloat(grad.getAttribute('cy') || 0);
+    const r = parseFloat(grad.getAttribute('r') || 0);
+    const fx = grad.hasAttribute('fx') ? parseFloat(grad.getAttribute('fx')) : null;
+    const fy = grad.hasAttribute('fy') ? parseFloat(grad.getAttribute('fy')) : null;
+
+    const stops = Array.from(grad.querySelectorAll('stop')).map(stop => ({
+      offset: parseFloat(stop.getAttribute('offset')),
+      color: stop.getAttribute('stop-color'),
+      opacity: parseFloat(stop.getAttribute('stop-opacity') || 1)
+    }));
+
+    gradientDefs[id] = {
+      type: 'radial',
+      cx, cy, r, fx, fy,
+      stops,
+      gradientTransform: grad.getAttribute('gradientTransform'),
+      gradientUnits: grad.getAttribute('gradientUnits') || 'objectBoundingBox'
+    };
+  });
+
+  const paths = svgDoc.querySelectorAll('path');
+  const svgPaths = Array.from(paths).map((svg_path) => {
+    let fill = svg_path.getAttribute('fill');
+    let fillGradientId = null;
+
+    if (fill?.startsWith('url(')) {
+      const match = fill.match(/url\(#(.+?)\)/);
+      if (match) {
+        fillGradientId = match[1];
+        fill = null;
+      }
+    }
+
+    return {
+      path: new Path2D(svg_path.getAttribute('d')),
+      fill,
+      stroke: svg_path.getAttribute('stroke'),
+      stroke_width: svg_path.getAttribute('stroke-width'),
+      fillGradientId,
+    };
+  });
+
+  return { svgPaths, gradientDefs };
+}
+
+async function draw_svg_paths(ctx, svg, x, y) {
+  const { svgPaths, gradientDefs } = svg;
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  for (const obj of svgPaths) {
+    ctx.lineWidth = obj.stroke_width;
+
+    if (obj.fillGradientId) {
+      const gradientDef = gradientDefs[obj.fillGradientId];
+      if (gradientDef?.type === 'radial') {
+        ctx.fillStyle = applyRadialGradient(ctx, gradientDef);
+      } else {
+        ctx.fillStyle = '#000'; // fallback
+      }
+    } else if (obj.fill) {
+      ctx.fillStyle = obj.fill;
+    } else {
+      ctx.fillStyle = 'black'; // default
+    }
+
+    ctx.fill(obj.path);
+  }
+
+  ctx.restore();
+}
+
+// You can also use a local file or another SVG with complex radial gradients
+fetch('https://hg.mozilla.org/mozilla-central/raw-file/tip/browser/branding/unofficial/content/about-logo.svg')
+  .then(res => res.text())
+  .then(parse_svg)
+  .then(svg => draw_svg_paths(ctx, svg, 0, 0));
+</script>
+</body>
+</html>
