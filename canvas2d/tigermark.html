@@ -15,6 +15,7 @@
             background: #87CEEB;
         }
     </style>
+    <script src="./svg2canvas.js"></script>
 </head>
 
 <body>
@@ -23,32 +24,6 @@
         // { var script = document.createElement('script'); script.onload = function () { var stats = new Stats(); document.body.appendChild(stats.dom); requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) }); }; script.src = './stats.min.js'; document.head.appendChild(script); }
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-
-        async function parse_svg(svg_text) {
-            const parser = new DOMParser();
-            const svgDoc = parser.parseFromString(svg_text, "image/svg+xml");
-            const paths = svgDoc.querySelectorAll('path');
-            return Array.from(paths).map((svg_path) => ({
-                path: new Path2D(svg_path.getAttribute('d')),
-                fill: svg_path.getAttribute('fill'),
-                stroke: svg_path.getAttribute('stroke'),
-                stroke_width: svg_path.getAttribute('stroke-width'),
-            }))
-        }
-
-        async function draw_tiger(x, y) {
-            ctx.save();
-            ctx.translate(x, y); // or center based on viewBox
-            for (const obj of svg) {
-                ctx.lineWidth = obj.stroke_width;
-                ctx.fillStyle = obj.fill;
-                ctx.strokeStyle = obj.stroke;
-                //if (obj.stroke) ctx.stroke(obj.path);
-                //ctx.lineWidth = 0.5; ctx.stroke(obj.path);
-                ctx.fill(obj.path);
-            }
-            ctx.restore();
-        }
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -102,7 +77,7 @@
             }
 
             draw() {
-                draw_tiger(this.x, this.y);
+                fill_svg_paths(ctx, svg, this.x, this.y);
             }
         }
 
@@ -155,9 +130,7 @@
             ctx.fillText(`FPS: ${fps}`, 10, 100);
         }
 
-        fetch('Ghostscript_Tiger.svg')
-            .then((response) => response.text())
-            .then(parse_svg)
+        load_svg('Ghostscript_Tiger.svg')
             .then((parsed_svg) => {
                 svg = parsed_svg;
                 addBunnies(1);
