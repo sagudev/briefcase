@@ -23,6 +23,7 @@
     <canvas id="canvas"></canvas>
     <script>
         let params = new URLSearchParams(document.location.search);
+        const step = parseInt(params.get("step")) || 1;
 
         // { var script = document.createElement('script'); script.onload = function () { var stats = new Stats(); document.body.appendChild(stats.dom); requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) }); }; script.src = './stats.min.js'; document.head.appendChild(script); }
         const canvas = document.getElementById('canvas');
@@ -96,17 +97,20 @@
             }
         }
 
-        function addObjects(count = 100) {
-            for (let i = 0; i < count; i++) {
+        function addObjects(n) {
+            if (n % 10 == 0 && objects.length == 1) {
+                objects = [];
+            }
+            for (let i = 0; i < n; i++) {
                 objects.push(new_object());
             }
         }
 
         canvas.onclick = (e) => {
             e.preventDefault();
-            addObjects(1);
+            addObjects(step);
         };
-        canvas.onauxclick = (e) => {
+        canvas.oncontextmenu = (e) => {
             e.preventDefault();
             objects = [];
             addObjects(1);
