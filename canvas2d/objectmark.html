@@ -161,9 +161,22 @@
             if (start && end) {
                 objects = [];
 
-                console.log(['objects', 'avg_frame_time', 'FPS',
-                    ...Array.from({ length: sample }, (_, i) => `frame_time_${i}`)
-                ].join(','));
+                // warmup round
+                addObjects(start)
+                await wait(warmup * 2);
+                const { avgFrameTime, fps, frameTimes } = await measureFrameTimesRaw();
+                objects = [];
+
+                let results = {
+                    url: window.location,
+                    width: canvas.width,
+                    height: canvas.height,
+                    case: params.get("object") || "bunny",
+                    start: start,
+                    step: step,
+                    end: end,
+                    results: {}
+                };
 
                 for (let count = start; count <= end; count += step) {
                     if (count == start) {
@@ -175,9 +188,13 @@
 
                     const { avgFrameTime, fps, frameTimes } = await measureFrameTimesRaw();
 
-                    const row = [count, avgFrameTime, fps, ...frameTimes].join(',');
-                    console.log(row);
+                    results.results[`${objects.length}`] = {
+                        avgFrameTime: avgFrameTime,
+                        fps: fps,
+                        frameTimes: frameTimes,
+                    }
                 }
+                console.log(JSON.stringify(results));
                 window.close();
             }
         }
@@ -269,7 +286,7 @@
                         resolve({
                             avgFrameTime: avg.toFixed(2),
                             fps: fps,
-                            frameTimes: frameTimes.map(t => t.toFixed(6))
+                            frameTimes: frameTimes.map(t => t.toFixed(2))
                         });
                     }
                 }
