@@ -21,9 +21,13 @@
 <body>
     <div id="overlay" style="position:fixed;top:70px;opacity:0.9;z-index:10000"></div>
     <canvas id="canvas"></canvas>
-    <script>
+    <script type="module">
         let params = new URLSearchParams(document.location.search);
         const step = parseInt(params.get("step")) || 1;
+        const warmup = parseInt(params.get("warmup")) || 500;
+
+        const start = parseInt(params.get("start"));
+        const end = parseInt(params.get("end"))
 
         // { var script = document.createElement('script'); script.onload = function () { var stats = new Stats(); document.body.appendChild(stats.dom); requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) }); }; script.src = './stats.min.js'; document.head.appendChild(script); }
         const canvas = document.getElementById('canvas');
@@ -150,21 +154,42 @@
             overlay.innerHTML = `Objects: ${objects.length}<br>FPS: ${fps}`;
         }
 
-        function init_draw() {
+        async function init_draw() {
             addObjects(1);
             requestAnimationFrame(animate);
+            if (start && end) {
+                objects = [];
+
+                console.log(
+                    `Object count,FPS,Frame time,Frame time dev`
+                );
+
+                for (let count = start; count <= end; count += step) {
+                    if (count == start) {
+                        addObjects(start)
+                    } else {
+                        addObjects(step);
+                    }
+                    await wait(warmup);
+                    const { fps, frameTime, frameStdDev } = await measureFrameTimes();
+
+                    console.log(
+                        `${objects.length},${fps},${frameTime},${frameStdDev}`
+                    );
+                }
+            }
         }
 
         switch (params.get("object")) {
             case "tiger":
                 load_svg('Ghostscript_Tiger.svg')
-                    .then((svg) => {
+                    .then(async (svg) => {
                         window.new_object = () => {
                             return new GraphicObject(200, 200, (x, y) => {
                                 fill_svg_paths(ctx, svg, x, y)
                             });
                         }
-                        init_draw();
+                        await init_draw();
                     });
                 break;
             case "primitive":
@@ -174,44 +199,103 @@
                         ctx.fillRect(x, y, 10, 20);
                     }, true);
                 }
-                init_draw();
+                await init_draw();
                 break;
             case "world":
             case "stroke":
                 load_svg('world-mesh.svg')
-                    .then((svg) => {
+                    .then(async (svg) => {
                         window.new_object = () => {
                             return new GraphicObject(256, 256, (x, y) => {
                                 stroke_svg_paths(ctx, svg, x, y, 0.5);
                             });
                         }
-                        init_draw();
+                        await init_draw();
                     });
                 break;
             case "fill":
                 load_svg('world-mesh.svg')
-                    .then((svg) => {
+                    .then(async (svg) => {
                         window.new_object = () => {
                             return new GraphicObject(256, 256, (x, y) => {
                                 fill_svg_paths(ctx, svg, x, y, 0.5);
                             });
                         }
-                        init_draw();
+                        await init_draw();
                     });
                 break;
             case "bunny":
             default:
                 const bunnyImage = new Image();
                 bunnyImage.src = './bunny.png';
-                bunnyImage.onload = () => {
+                bunnyImage.onload = async () => {
                     window.new_object = () => {
                         return new GraphicObject(20, 40, (x, y) => {
                             ctx.drawImage(bunnyImage, x, y);
                         }, true);
                     }
-                    init_draw();
+                    await init_draw();
                 };
                 break;
+        }
+
+        function stddev(arr) {
+            const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+            const variance = arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length;
+            return Math.sqrt(variance);
+        }
+
+        async function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function measureFrameTimes({
+            warmupFrames = 120,
+            sampleFrames = 300,
+            slidingWindowSize = 60,
+            trimPercent = 0.1 // 10% trimming
+        } = {}) {
+            return new Promise(resolve => {
+                let frameCount = 0;
+                let last = performance.now();
+                let slidingWindow = [];
+
+                function frame(now) {
+                    const delta = now - last;
+                    last = now;
+                    frameCount++;
+
+                    if (frameCount > warmupFrames) {
+                        if (slidingWindow.length < slidingWindowSize) {
+                            slidingWindow.push(delta);
+                        } else {
+                            slidingWindow.shift();
+                            slidingWindow.push(delta);
+                        }
+                    }
+
+                    if (frameCount < warmupFrames + sampleFrames) {
+                        requestAnimationFrame(frame);
+                    } else {
+                        // Sort for trimming
+                        const sorted = [...slidingWindow].sort((a, b) => a - b);
+                        const trimCount = Math.floor(sorted.length * trimPercent);
+                        const trimmed = sorted.slice(trimCount, sorted.length - trimCount);
+
+                        const avgFrameTime = trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
+                        const stdDevTime = stddev(trimmed);
+                        const avgFPS = 1000 / avgFrameTime;
+
+                        resolve({
+                            fps: avgFPS.toFixed(0),
+                            frameTime: avgFrameTime.toFixed(2),
+                            frameStdDev: stdDevTime.toFixed(2)
+                        });
+                    }
+                }
+
+                requestAnimationFrame(frame);
+            });
         }
     </script>
 </body>
