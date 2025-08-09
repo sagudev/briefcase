@@ -19,14 +19,19 @@
 </head>
 
 <body>
+    <div id="overlay" style="position:fixed;top:70px;opacity:0.9;z-index:10000"></div>
     <canvas id="canvas"></canvas>
     <script>
+        let params = new URLSearchParams(document.location.search);
+
         // { var script = document.createElement('script'); script.onload = function () { var stats = new Stats(); document.body.appendChild(stats.dom); requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) }); }; script.src = './stats.min.js'; document.head.appendChild(script); }
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = parseInt(params.get("w")) || window.innerWidth;
+        canvas.height = parseInt(params.get("h")) || window.innerHeight;
+
+        const ctx = canvas.getContext('2d');
 
         const gravity = 0.5;
         var objects = [];
@@ -134,10 +139,11 @@
             }
 
             // Draw metrics
-            ctx.fillStyle = 'black';
-            ctx.font = '20px Arial';
-            ctx.fillText(`Objects: ${objects.length}`, 10, 70);
-            ctx.fillText(`FPS: ${fps}`, 10, 100);
+            //ctx.fillStyle = 'black';
+            //ctx.font = '20px Arial';
+            //ctx.fillText(`Objects: ${objects.length}`, 10, 70);
+            //ctx.fillText(`FPS: ${fps}`, 10, 100);
+            overlay.innerHTML = `Objects: ${objects.length}<br>FPS: ${fps}`;
         }
 
         function init_draw() {
@@ -145,10 +151,7 @@
             requestAnimationFrame(animate);
         }
 
-        let params = new URLSearchParams(document.location.search);
-        let name = params.get("object");
-
-        switch (name) {
+        switch (params.get("object")) {
             case "tiger":
                 load_svg('Ghostscript_Tiger.svg')
                     .then((svg) => {
