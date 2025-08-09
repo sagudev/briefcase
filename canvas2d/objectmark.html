@@ -268,7 +268,7 @@
                         resolve({
                             avgFrameTime: avg.toFixed(2),
                             fps: fps,
-                            frameTimes: frameTimes.map(t => (t * 1000).toFixed(2))
+                            frameTimes: frameTimes.map(t => t.toFixed(6))
                         });
                     }
                 }
