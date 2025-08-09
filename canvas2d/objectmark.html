@@ -24,7 +24,8 @@
     <script type="module">
         let params = new URLSearchParams(document.location.search);
         const step = parseInt(params.get("step")) || 1;
-        const warmup = parseInt(params.get("warmup")) || 500;
+        const warmup = parseInt(params.get("warmup")) || 150;
+        const sample = parseInt(params.get("sample")) || 300;
 
         const start = parseInt(params.get("start"));
         const end = parseInt(params.get("end"))
@@ -160,9 +161,9 @@
             if (start && end) {
                 objects = [];
 
-                console.log(
-                    `Object count,FPS,Frame time,Frame time dev`
-                );
+                console.log(['objects', 'avg_frame_time', 'FPS',
+                    ...Array.from({ length: sample }, (_, i) => `frame_time_${i}`)
+                ].join(','));
 
                 for (let count = start; count <= end; count += step) {
                     if (count == start) {
@@ -170,12 +171,12 @@
                     } else {
                         addObjects(step);
                     }
-                    await wait(warmup);
-                    const { fps, frameTime, frameStdDev } = await measureFrameTimes();
+                    await wait(warmup * 2);
 
-                    console.log(
-                        `${objects.length},${fps},${frameTime},${frameStdDev}`
-                    );
+                    const { avgFrameTime, fps, frameTimes } = await measureFrameTimesRaw();
+
+                    const row = [count, avgFrameTime, fps, ...frameTimes].join(',');
+                    console.log(row);
                 }
             }
         }
@@ -239,57 +240,35 @@
                 break;
         }
 
-        function stddev(arr) {
-            const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-            const variance = arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length;
-            return Math.sqrt(variance);
-        }
-
         async function wait(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        async function measureFrameTimes({
-            warmupFrames = 120,
-            sampleFrames = 300,
-            slidingWindowSize = 60,
-            trimPercent = 0.1 // 10% trimming
-        } = {}) {
+        async function measureFrameTimesRaw() {
             return new Promise(resolve => {
-                let frameCount = 0;
+                let frameIndex = 0;
                 let last = performance.now();
-                let slidingWindow = [];
+                let frameTimes = [];
 
                 function frame(now) {
                     const delta = now - last;
                     last = now;
-                    frameCount++;
+                    frameIndex++;
 
-                    if (frameCount > warmupFrames) {
-                        if (slidingWindow.length < slidingWindowSize) {
-                            slidingWindow.push(delta);
-                        } else {
-                            slidingWindow.shift();
-                            slidingWindow.push(delta);
-                        }
+                    if (frameIndex > warmup && frameIndex <= warmup + sample) {
+                        frameTimes.push(delta);
                     }
 
-                    if (frameCount < warmupFrames + sampleFrames) {
+                    if (frameIndex < warmup + sample) {
                         requestAnimationFrame(frame);
                     } else {
-                        // Sort for trimming
-                        const sorted = [...slidingWindow].sort((a, b) => a - b);
-                        const trimCount = Math.floor(sorted.length * trimPercent);
-                        const trimmed = sorted.slice(trimCount, sorted.length - trimCount);
-
-                        const avgFrameTime = trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
-                        const stdDevTime = stddev(trimmed);
-                        const avgFPS = 1000 / avgFrameTime;
+                        const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+                        const fps = 1000 / avg;
 
                         resolve({
-                            fps: avgFPS.toFixed(0),
-                            frameTime: avgFrameTime.toFixed(2),
-                            frameStdDev: stdDevTime.toFixed(2)
+                            avgFrameTime: avg.toFixed(2),
+                            fps: fps,
+                            frameTimes: frameTimes.map(t => t.toFixed(6))
                         });
                     }
                 }
@@ -297,6 +276,7 @@
                 requestAnimationFrame(frame);
             });
         }
+
     </script>
 </body>
 
