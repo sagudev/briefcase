@@ -25,9 +25,9 @@
         let params = new URLSearchParams(document.location.search);
         const step = parseInt(params.get("step")) || 1;
         const warmup = parseInt(params.get("warmup")) || 150;
-        const sample = parseInt(params.get("sample")) || 300;
+        const sample = parseInt(params.get("sample")) || 150;
 
-        const start = parseInt(params.get("start"));
+        const start = parseInt(params.get("start")) || 1;
         const end = parseInt(params.get("end"))
 
         // { var script = document.createElement('script'); script.onload = function () { var stats = new Stats(); document.body.appendChild(stats.dom); requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) }); }; script.src = './stats.min.js'; document.head.appendChild(script); }
@@ -156,13 +156,10 @@
         }
 
         async function init_draw() {
-            addObjects(1);
+            addObjects(start);
             requestAnimationFrame(animate);
-            if (start && end) {
-                objects = [];
-
+            if (end) {
                 // warmup round
-                addObjects(start)
                 await wait(warmup * 2);
                 const { avgFrameTime, fps, frameTimes } = await measureFrameTimesRaw();
                 objects = [];
