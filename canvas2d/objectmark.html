@@ -202,7 +202,7 @@
                     .then(async (svg) => {
                         window.new_object = () => {
                             return new GraphicObject(200, 200, (x, y) => {
-                                fill_svg_paths(ctx, svg, x, y)
+                                fill_stroke_svg_paths(ctx, svg, x, y)
                             });
                         }
                         await init_draw();

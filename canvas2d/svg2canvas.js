@@ -24,15 +24,16 @@ async function fill_svg_paths(ctx, svg, x, y, zoom = 1) {
   ctx.restore();
 }
 
-async function draw_svg_paths(ctx, svg, x, y) {
+async function fill_stroke_svg_paths(ctx, svg, x, y, zoom = 1) {
   ctx.save();
   ctx.translate(x, y); // or center based on viewBox
+  ctx.scale(zoom, zoom);
   for (const obj of svg) {
     ctx.lineWidth = obj.stroke_width;
     ctx.fillStyle = obj.fill;
     ctx.strokeStyle = obj.stroke;
+    if (obj.fill) ctx.fill(obj.path);
     if (obj.stroke) ctx.stroke(obj.path);
-    ctx.fill(obj.path);
   }
   ctx.restore();
 }
