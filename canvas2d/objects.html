@@ -48,13 +48,60 @@
             <td><img src="./Ghostscript_Tiger.svg"></td>
         </tr>
         <tr>
-            <td>Potez v poti</td>
+            <td>Poti</td>
+            <td>1</td>
+            <td>/</td>
+            <td>1</td>
+            <td>??</td>
+        </tr>
+        <tr>
+            <td>Potez v poteh</td>
             <td>4</td>
             <td>/</td>
             <td>512</td>
-            <td>1384</td>
+            <td>??</td>
         </tr>
     </table>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const svgFiles = [
+                { url: './world-mesh.svg', potiCell: [2, 3], potezCell: [3, 3] },  // row 3 col 4, row 4 col 4
+                { url: './Ghostscript_Tiger.svg', potiCell: [2, 4], potezCell: [3, 4] } // row 3 col 5, row 4 col 5
+            ];
+
+            const table = document.querySelector('table');
+
+            function countCommandsInPath(pathElement) {
+                const d = pathElement.getAttribute('d');
+                if (!d) return 0;
+                const commandRegex = /[MLHVCSQTAZmlhvcsqtaz]/g;
+                const matches = d.match(commandRegex);
+                return matches ? matches.length : 0;
+            }
+
+            svgFiles.forEach(file => {
+                fetch(file.url)
+                    .then(response => response.text())
+                    .then(svgText => {
+                        const parser = new DOMParser();
+                        const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+                        const paths = svgDoc.querySelectorAll('path');
+
+                        table.rows[file.potiCell[0]].cells[file.potiCell[1]].textContent = paths.length;
+
+                        const perPathCounts = Array.from(paths).map(countCommandsInPath);
+                        const total = perPathCounts.reduce((sum, count) => sum + count, 0);
+
+                        table.rows[file.potezCell[0]].cells[file.potezCell[1]].textContent = /*perPathCounts.join(' + ') + ' = ' +*/ total;
+                    })
+                    .catch(error => {
+                        console.error(`Error loading ${file.url}:`, error);
+                        table.rows[file.potiCell[0]].cells[file.potiCell[1]].textContent = "!";
+                        table.rows[file.potezCell[0]].cells[file.potezCell[1]].textContent = "!";
+                    });
+            });
+        });
+    </script>
 
 </body>
 
