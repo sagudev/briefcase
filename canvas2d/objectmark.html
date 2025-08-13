@@ -208,6 +208,17 @@
                         await init_draw();
                     });
                 break;
+            case "tiger-unstroked":
+                load_svg('Ghostscript_Tiger.svg')
+                    .then(async (svg) => {
+                        window.new_object = () => {
+                            return new GraphicObject(200, 200, (x, y) => {
+                                fill_svg_paths(ctx, svg, x, y)
+                            });
+                        }
+                        await init_draw();
+                    });
+                break;
             case "primitive":
                 window.new_object = () => {
                     return new GraphicObject(10, 20, (x, y) => {
