@@ -250,6 +250,30 @@
             return tokens;
         }
 
+        function groupsFromTokens(tokens, mapper) {
+            const groups = [];
+            let pendingDelim = '';
+            for (const t of tokens) {
+                if (t.type === 'delimiter') {
+                    pendingDelim += t.text;
+                } else if (t.type === 'single') {
+                    const mid = mapper(t.token);
+                    if (mid != null) groups.push({ mids: [mid], delim: pendingDelim });
+                    pendingDelim = '';
+                } else if (t.type === 'chord') {
+                    const mids = [];
+                    for (const item of t.items) {
+                        const mid = mapper(item);
+                        if (mid != null) mids.push(mid);
+                    }
+                    if (mids.length) groups.push({ mids, delim: pendingDelim });
+                    pendingDelim = '';
+                }
+            }
+            if (pendingDelim && groups.length) groups[groups.length - 1].delim += pendingDelim;
+            return groups;
+        }
+
         function parseToken(tok) {
             const t = tok.replace(/\s+/g, '');
             const hasSlide = t.includes('<');
@@ -290,22 +314,15 @@
             const warnings = [];
             const events = [];
             const beats = parseFloat(document.getElementById('beats').value) || 1;
-            for (const t of tokens) {
-                if (t.type === 'single') {
-                    const p = parseToken(t.token);
-                    if (!p) { continue; }
-                    const midi = type === 'diatonic' ? toMidiDiatonic(p, keyName, warnings) : toMidiChromatic(p, NOTE_OFFSETS[keyName] ?? 0, warnings);
-                    if (midi != null) events.push({ notes: [midi], beats });
-                } else if (t.type === 'chord') {
-                    const mids = [];
-                    for (const item of t.items) {
-                        const p = parseToken(item);
-                        if (!p) { continue; }
-                        const midi = type === 'diatonic' ? toMidiDiatonic(p, keyName, warnings) : toMidiChromatic(p, NOTE_OFFSETS[keyName] ?? 0, warnings);
-                        if (midi != null) mids.push(midi);
-                    }
-                    if (mids.length) events.push({ notes: mids, beats });
-                }
+            const groups = groupsFromTokens(tokens, (tok) => {
+                const p = parseToken(tok);
+                if (!p) return null;
+                return type === 'diatonic'
+                    ? toMidiDiatonic(p, keyName, warnings)
+                    : toMidiChromatic(p, NOTE_OFFSETS[keyName] ?? 0, warnings);
+            });
+            for (const g of groups) {
+                events.push({ notes: g.mids, beats });
             }
             document.getElementById('export').disabled = events.length === 0;
             return events;
@@ -438,21 +455,37 @@
         const MY_HARP_MIDI_TO_TAB = new Map(MY_HARP_MAP.map(x => [x.midi, `${x.sign}${x.col}`]));
         const MY_HARP_COL_TO = new Map(MY_HARP_MAP.map(x => [x.col, x]));
 
-        function parsePianoTokens(input) {
+        function parsePianoTokens(input, warnings) {
             const text = (input || '')
                 .replace(/[\u266F]/g, '#')   // ♯ -> #
                 .replace(/[\u266D]/g, 'b');   // ♭ -> b
-            const parts = text.split(/(\s+)/);
             const tokens = [];
-            const delimiters = [];
-            for (const part of parts) {
-                if (/^\s+$/.test(part)) {
-                    delimiters.push(part);
-                } else if (part) {
-                    tokens.push(part);
+            let i = 0;
+            while (i < text.length) {
+                const ch = text[i];
+                if (ch === '(') {
+                    let j = i + 1, buf = '';
+                    while (j < text.length && text[j] !== ')') { buf += text[j++]; }
+                    tokens.push({ type: 'chord', items: buf.trim().split(/\s+/).filter(Boolean) });
+                    i = j + 1;
+                } else if (/\s/.test(ch)) {
+                    let delim = '';
+                    while (i < text.length && /\s/.test(text[i])) { delim += text[i++]; }
+                    tokens.push({ type: 'delimiter', text: delim });
+                } else {
+                    let buf = '';
+                    while (i < text.length && !/[\s()]/.test(text[i])) buf += text[i++];
+                    tokens.push({ type: 'single', token: buf });
                 }
             }
-            return { tokens, delimiters };
+            return groupsFromTokens(tokens, (tok) => {
+                const m = midiFromNoteName(tok);
+                if (m == null) {
+                    if (warnings) warnings.push('Unrecognized piano note: ' + tok);
+                    return null;
+                }
+                return m;
+            });
         }
 
         function midiFromNoteName(note) {
@@ -472,136 +505,108 @@
 
         function midisFromHarptabsString(text, type, keyName, warnings) {
             const tokens = tokenizeTabs(text || '');
-            const mids = [];
-            const delimiters = [];
-            for (const t of tokens) {
-                if (t.type === 'single') {
-                    const p = parseToken(t.token);
-                    if (!p) { warnings.push('Unrecognized token: ' + t.token); continue; }
-                    const m = type === 'diatonic' ? toMidiDiatonic(p, keyName, warnings) : toMidiChromatic(p, NOTE_OFFSETS[keyName] ?? 0, warnings);
-                    if (m != null) mids.push(m);
-                } else if (t.type === 'chord') {
-                    for (const item of t.items) {
-                        const p = parseToken(item);
-                        if (!p) { warnings.push('Unrecognized chord item: ' + item); continue; }
-                        const m = type === 'diatonic' ? toMidiDiatonic(p, keyName, warnings) : toMidiChromatic(p, NOTE_OFFSETS[keyName] ?? 0, warnings);
-                        if (m != null) mids.push(m);
-                    }
-                } else if (t.type === 'delimiter') {
-                    delimiters.push(t.text);
-                }
-            }
-            return { mids, delimiters };
+            return groupsFromTokens(tokens, (tok) => {
+                const p = parseToken(tok);
+                if (!p) { warnings.push('Unrecognized token: ' + tok); return null; }
+                return type === 'diatonic' ? toMidiDiatonic(p, keyName, warnings) : toMidiChromatic(p, NOTE_OFFSETS[keyName] ?? 0, warnings);
+            });
         }
 
-        function midisToPianoString(mids, delimiters) {
-            if (!delimiters || delimiters.length === 0) return mids.map(noteName).join(' ');
+        function midisToPianoString(groups) {
             const parts = [];
-            for (let i = 0; i < mids.length; i++) {
-                parts.push(noteName(mids[i]));
-                if (i < delimiters.length) parts.push(delimiters[i]);
+            for (const g of groups) {
+                const toks = g.mids.map(noteName);
+                parts.push(toks.length > 1 ? '(' + toks.join(' ') + ')' : toks[0]);
+                if (g.delim) parts.push(g.delim);
             }
             return parts.join('');
         }
 
-        function midisToMyHarpString(mids, warnings, delimiters) {
-            if (!delimiters || delimiters.length === 0) {
-                const out = [];
-                for (const m of mids) {
-                    const tab = MY_HARP_MIDI_TO_TAB.get(m);
-                    if (!tab) {
-                        warnings.push('Note not on my harmonica: ' + noteName(m));
-                        out.push('�');
-                    } else {
-                        out.push(tab);
-                    }
-                }
-                return out.join(' ');
-            }
+        function midisToMyHarpString(groups, warnings) {
             const parts = [];
-            for (let i = 0; i < mids.length; i++) {
-                const m = mids[i];
-                const tab = MY_HARP_MIDI_TO_TAB.get(m);
-                if (!tab) {
-                    warnings.push('Note not on my harmonica: ' + noteName(m));
-                    parts.push('�');
-                } else {
-                    parts.push(tab);
-                }
-                if (i < delimiters.length) parts.push(delimiters[i]);
+            for (const g of groups) {
+                const tokens = g.mids.map(m => {
+                    const tab = MY_HARP_MIDI_TO_TAB.get(m);
+                    if (!tab) { warnings.push('Note not on my harmonica: ' + noteName(m)); return '�'; }
+                    return tab;
+                });
+                parts.push(tokens.length > 1 ? '(' + tokens.join(' ') + ')' : tokens[0]);
+                if (g.delim) parts.push(g.delim);
             }
             return parts.join('');
         }
 
         function myHarpStringToMidis(text, warnings) {
-            const parts = (text || '').split(/(\s+)/);
-            const mids = [];
-            const delimiters = [];
-            for (const part of parts) {
-                if (/^\s+$/.test(part)) {
-                    delimiters.push(part);
-                } else if (part) {
-                    const m = part.match(/^([+-])?(\d{1,2})$/);
-                    if (!m) { warnings.push('Unrecognized my-harp token: ' + part); continue; }
-                    const sign = m[1] || '+';
-                    const col = parseInt(m[2], 10);
-                    const info = MY_HARP_COL_TO.get(col);
-                    if (!info) { warnings.push('Invalid column: ' + col); continue; }
-                    if (sign !== info.sign) warnings.push('Sign mismatch for col ' + col + ' (expected ' + info.sign + ')');
-                    mids.push(info.midi);
+            const tokens = [];
+            let i = 0;
+            while (i < (text || '').length) {
+                const ch = text[i];
+                if (ch === '(') {
+                    let j = i + 1, buf = '';
+                    while (j < text.length && text[j] !== ')') { buf += text[j++]; }
+                    tokens.push({ type: 'chord', items: buf.trim().split(/\s+/).filter(Boolean) });
+                    i = j + 1;
+                } else if (/\s/.test(ch)) {
+                    let delim = '';
+                    while (i < text.length && /\s/.test(text[i])) { delim += text[i++]; }
+                    tokens.push({ type: 'delimiter', text: delim });
+                } else {
+                    let buf = '';
+                    while (i < text.length && !/[\s()]/.test(text[i])) buf += text[i++];
+                    tokens.push({ type: 'single', token: buf });
                 }
             }
-            return { mids, delimiters };
+
+            return groupsFromTokens(tokens, (tok) => {
+                const m = tok.match(/^([+-])?(\d{1,2})$/);
+                if (!m) { warnings.push('Unrecognized my-harp token: ' + tok); return null; }
+                const sign = m[1] || '+';
+                const col = parseInt(m[2], 10);
+                const info = MY_HARP_COL_TO.get(col);
+                if (!info) { warnings.push('Invalid column: ' + col); return null; }
+                if (sign !== info.sign) warnings.push('Sign mismatch for col ' + col + ' (expected ' + info.sign + ')');
+                return info.midi;
+            });
         }
 
-        function midisToHarptabsString(mids, type, keyName, warnings, delimiters) {
-            const out = [];
+        function mapMidiToHarptab(m, type, keyName, warnings) {
             if (type === 'diatonic') {
                 const { blow, draw, drawBendsMax, blowBendsMax } = diatonicMapsForKey(keyName);
-                for (const m of mids) {
-                    const target = m;
-                    let best = null;
-                    for (let i = 1; i <= 10; i++) {
-                        const b = blow[i - 1];
-                        const maxB = blowBendsMax[i];
-                        for (let k = 0; k <= maxB; k++) if (b - k === target) best = best && best.k <= k ? best : { token: '+' + i + "'".repeat(k), k };
-                        const d = draw[i - 1];
-                        const maxD = drawBendsMax[i];
-                        for (let k = 0; k <= maxD; k++) if (d - k === target) best = best && best.k <= k ? best : { token: '-' + i + "'".repeat(k), k };
-                    }
-                    if (!best) {
-                        warnings.push('Unplayable on diatonic: ' + noteName(m));
-                        out.push('�');
-                    } else {
-                        out.push(best.token);
-                    }
+                const target = m;
+                let best = null;
+                for (let i = 1; i <= 10; i++) {
+                    const b = blow[i - 1];
+                    const maxB = blowBendsMax[i];
+                    for (let k = 0; k <= maxB; k++) if (b - k === target) best = best && best.k <= k ? best : { token: '+' + i + "'".repeat(k), k };
+                    const d = draw[i - 1];
+                    const maxD = drawBendsMax[i];
+                    for (let k = 0; k <= maxD; k++) if (d - k === target) best = best && best.k <= k ? best : { token: '-' + i + "'".repeat(k), k };
                 }
+                if (!best) { warnings.push('Unplayable on diatonic: ' + noteName(m)); return '�'; }
+                return best.token;
             } else {
                 const { blow, draw } = chromaticMaps();
-                for (const m of mids) {
-                    const target = m - (NOTE_OFFSETS[keyName] ?? 0);
-                    let best = null;
-                    for (let i = 1; i <= 12; i++) {
-                        const b = blow[i - 1];
-                        if (b === target) best = best || { token: '+' + i };
-                        if (b + 1 === target) best = best || { token: '+' + i + '<' };
-                        const d = draw[i - 1];
-                        if (d === target) best = best || { token: '-' + i };
-                        if (d + 1 === target) best = best || { token: '-' + i + '<' };
-                    }
-                    if (!best) {
-                        warnings.push('Unplayable on chromatic: ' + noteName(m));
-                        out.push('�');
-                    } else {
-                        out.push(best.token);
-                    }
+                const target = m - (NOTE_OFFSETS[keyName] ?? 0);
+                let best = null;
+                for (let i = 1; i <= 12; i++) {
+                    const b = blow[i - 1];
+                    if (b === target) best = best || { token: '+' + i };
+                    if (b + 1 === target) best = best || { token: '+' + i + '<' };
+                    const d = draw[i - 1];
+                    if (d === target) best = best || { token: '-' + i };
+                    if (d + 1 === target) best = best || { token: '-' + i + '<' };
                 }
+                if (!best) { warnings.push('Unplayable on chromatic: ' + noteName(m)); return '�'; }
+                return best.token;
             }
-            if (!delimiters || delimiters.length === 0) return out.join(' ');
+        }
+
+        function midisToHarptabsString(groups, type, keyName, warnings) {
             const parts = [];
-            for (let i = 0; i < out.length; i++) {
-                parts.push(out[i]);
-                if (i < delimiters.length) parts.push(delimiters[i]);
+            for (const g of groups) {
+                const toks = g.mids.map(m => mapMidiToHarptab(m, type, keyName, warnings));
+                parts.push(toks.length > 1 ? '(' + toks.join(' ') + ')' : toks[0]);
+                if (g.delim) parts.push(g.delim);
             }
             return parts.join('');
         }
@@ -609,33 +614,22 @@
         function syncFrom(source) {
             const type = document.getElementById('type').value;
             const keyName = document.getElementById('key').value;
-            const keyOffset = NOTE_OFFSETS[keyName] ?? 0;
             const warn = [];
-            let mids = [];
-            let delimiters = [];
+            let groups = [];
             if (source === 'harptabs') {
                 const ht = document.getElementById('tabs').value;
-                const result = midisFromHarptabsString(ht, type, keyName, warn);
-                mids = result.mids;
-                delimiters = result.delimiters;
+                groups = midisFromHarptabsString(ht, type, keyName, warn);
             } else if (source === 'piano') {
                 const p = document.getElementById('pianoInput').value;
-                const parsed = parsePianoTokens(p);
-                delimiters = parsed.delimiters;
-                for (const t of parsed.tokens) {
-                    const m = midiFromNoteName(t);
-                    if (m == null) warn.push('Unrecognized piano note: ' + t); else mids.push(m);
-                }
+                groups = parsePianoTokens(p, warn);
             } else if (source === 'myharp') {
                 const mt = document.getElementById('myTabsInput').value;
-                const result = myHarpStringToMidis(mt, warn);
-                mids = result.mids;
-                delimiters = result.delimiters;
+                groups = myHarpStringToMidis(mt, warn);
             }
             // Update the other two with preserved delimiters
-            const pianoStr = midisToPianoString(mids, delimiters);
-            const myStr = midisToMyHarpString(mids, warn, delimiters);
-            const htStr = midisToHarptabsString(mids, type, keyName, warn, delimiters);
+            const pianoStr = midisToPianoString(groups);
+            const myStr = midisToMyHarpString(groups, warn);
+            const htStr = midisToHarptabsString(groups, type, keyName, warn);
             const pianoEl = document.getElementById('pianoInput');
             const myEl = document.getElementById('myTabsInput');
             const htEl = document.getElementById('tabs');
